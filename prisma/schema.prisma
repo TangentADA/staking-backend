@@ -1,0 +1,60 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// datasource db {
+  // provider = "sqlite"
+  // url      = env("DATABASE_URL")
+// }
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+}
+
+model Unit {
+  unit  String  @unique
+  Asset Asset[]
+}
+
+model Asset {
+  id         Int       @id @default(autoincrement())
+  unit       Unit      @relation(fields: [unitUnit], references: [unit])
+  value      BigInt
+  unitUnit   String
+  Snapshot   Snapshot? @relation(fields: [snapshotId], references: [id])
+  snapshotId Int?
+}
+
+model Snapshot {
+  id      Int     @id @default(autoincrement())
+  keyhash String
+  value   Asset[]
+  Pool    Pool?   @relation(fields: [poolId], references: [id])
+  poolId  Int?
+}
+
+model Pool {
+  id        Int        @id @default(autoincrement())
+  poolIndex Int        @unique
+  snapshots Snapshot[]
+  updatedAt DateTime   @updatedAt
+}
+
+model ValidTx {
+  id        Int      @id @default(autoincrement())
+  txHash    String   @unique
+  keyhash   String
+  updatedAt DateTime @updatedAt
+}
+
+model TakenTxO {
+  id        Int      @id @default(autoincrement())
+  txHash    String
+  index     Int
+  updatedAt DateTime @updatedAt
+}
