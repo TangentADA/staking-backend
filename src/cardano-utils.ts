@@ -21,40 +21,32 @@ const initLucid = async () => {
 
 const submitJob = async (prisma: PrismaClient, submitReqBody: string) => {
     if (!process.env.SERVER_PRIVKEY) throw "SERVER_PRIVKEY env variable not set"
-
     //Validate and parse request body
     const { transaction, signatureList, signatureSet, address, poolI } = parseSubmitBody(submitReqBody)
     if (!address) throw "Address not provided."
-
     //Create txbodyHash
     const transaction_body = transaction.body();
     const txBodyHash = C.hash_transaction(transaction_body);
-
     //custom validation
-    let validated = await validate(prisma, Buffer.from(txBodyHash.to_hex(), 'hex').toString())
+    let validated = await validate(prisma, txBodyHash.to_hex())
     if (!validated) throw "The Transaction provided is not valid!!"
-
     //Create private key for server
     const serverKey = process.env.SERVER_PRIVKEY
-    const sKey = C.PrivateKey.from_bech32(serverKey)
-
+    const sKey = C.PrivateKey.from_extended_bytes(Buffer.from(serverKey, 'hex'))
+    // const sKey = C.PrivateKey.from_bech32(serverKey)
     // make tx witness with server key
     const witness = C.make_vkey_witness(
         txBodyHash,
         sKey
     );
-
     signatureList.add(witness);
     signatureSet.set_vkeys(signatureList);
-
     //copy native scripts from intial tx
     const txNativeScripts = transaction.witness_set().native_scripts()
     if (txNativeScripts) signatureSet.set_native_scripts(txNativeScripts)
-
     // copy metadata from intial tx
     const aux = C.AuxiliaryData.new()
     const txMetadata = transaction.auxiliary_data()?.metadata()
-
     //assemble the tx with witnesses and metadata
     let signedTx;
     if (txMetadata) {
@@ -63,21 +55,17 @@ const submitJob = async (prisma: PrismaClient, submitReqBody: string) => {
     } else {
         signedTx = C.Transaction.new(transaction.body(), signatureSet)
     }
-
     //init lucid and use provider to submit
     const lib = await initLucid()
     try {
         const resF = await lib.provider.submitTx(signedTx)
-
         await removeUsersAssetsFromDB(prisma, address, poolI)
-
         //if returns txHash, return it, otherwise error
         //TODO: better check would be nice
         if (resF && resF.length === 64) return { transactionId: resF }
     } catch (err) {
         console.log(err)
     }
-
     throw 'Failed to submit'
 }
 
