@@ -178,12 +178,12 @@ const harvestTx = async (prisma: PrismaClient, body: string) => {
   let tx: any = lucid.newTx()
     .collectFrom([userUtxo, beUtxo])
   
-  if (beLength < 10) {
+  if (beLength < 10) { // Note: if statement was commented out when testing successfully with ADAO (only else statement) got triggered
     let splitAssets = divideAssetsBy2(distPayback)
     tx = tx.payToAddress(poolargs.poolInfo.distAddress, splitAssets[0])
     tx = tx.payToAddress(poolargs.poolInfo.distAddress, splitAssets[1])
   } else {
-    tx = tx.payToAddress(poolargs.poolInfo.distAddress, distPayback)
+  tx = tx.payToAddress(poolargs.poolInfo.distAddress, distPayback)
   }
   let now = new Date().valueOf()
   let slot = lucid.utils.unixTimeToSlot(now + 180000)
