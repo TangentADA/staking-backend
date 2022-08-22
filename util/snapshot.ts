@@ -74,7 +74,7 @@ const dbFromPool = async (poolIndex: number, poolargs: any, valueAdded: Assets) 
         if (!pubkeyhash) {
             try {
                 // TODO - It probably makes sense to store the DatumHash of a user in the db as well so as to reduce queries to blockfrost.
-                pubkeyhash = await getPubKey(utxo.txHash, utxo.outputIndex);
+                pubkeyhash = await getPubKey(utxo.txHash, 0);
                 if (pubkeyhash) {
                     mapofHash.set(dHash, pubkeyhash);
                 }
