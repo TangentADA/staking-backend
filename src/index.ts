@@ -3,6 +3,7 @@ import fastify from 'fastify'
 import Bottleneck from 'bottleneck'
 import { submitJob } from './cardano-utils.js'
 import { harvestTx } from './harvestTx.js'
+import { harvest } from '../components/harvestTx'
 import { pendingRewards } from './pendingRewards.js'
 import dotenv from 'dotenv'
 dotenv.config()
@@ -71,4 +72,15 @@ server.post('/submit', async (request, reply) => {
 server.post('/pendingRewards', async (request, reply) => {
     const body: any = request.body
     return await limiter.schedule(() => pendingRewards(prisma, body))
+})
+
+/*** v2 revision API based on new components & logic ***/
+/*** TODO: Dividing and Separating Main Router & Controllers ***/
+
+server.post('/v2/harvestTx', async (request, reply) => {
+    console.log(`Entered /v2/harvestTx`)
+    const body: any = request.body
+    const resp = await limiter.schedule(() => harvest(prisma, body))
+    console.log(resp)
+    return resp
 })

@@ -1,0 +1,106 @@
+components:
+  schemas:
+    HarvestDto:
+      type: object
+      properties:
+        address:
+          type: string
+        poolIndex:
+          type: number
+      required:
+        - poolIndex
+        - address
+    SubmitDto:
+      type: object
+      properties:
+        transaction:
+          type: string
+        signatureList:
+          type: array
+          "items": {
+              "type": "string"
+          }
+        signatureSet:
+          type: string
+        address:
+          type: string
+        poolI:
+          type: string
+      required:
+        - transaction
+        - signatureList
+        - signatureSet
+        - address
+        - poolI
+    PendingRewardsDto:
+      type: object
+      properties:
+        address:
+          type: string
+        poolIndex:
+          type: number
+      required:
+        - poolIndex
+        - address
+info:
+  title: Tangent Staking Backend Service
+  description: Tangent App Server Side Api Documentation For staking backend service.
+  version: '1.0'
+  contact: {}
+openapi: 3.0.0
+paths:
+  /harvestTx:
+    post:
+      operationId: harvestTx
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HarvestDto'
+      responses:
+        '201':
+          description: The harvest req has been successfully done.
+        '403':
+          description: Forbidden.
+      tags:
+        - harvestTx
+  /submit:
+    post:
+      operationId: submit
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitDto'
+      responses:
+        '201':
+          description: The submit job req has been successfully done.
+        '403':
+          description: Forbidden.
+      tags:
+        - submitJob
+  /pendingRewards:
+    post:
+      operationId: pendingRewards
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitDto'
+      responses:
+        '201':
+          description: The pending rewards req has been successfully done.
+        '403':
+          description: Forbidden.
+      tags:
+        - pendingRewards
+servers: []
+tags:
+  - name: ADAO
+    description: 'Staking Backend Api'
