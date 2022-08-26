@@ -2,7 +2,7 @@ import { PrismaClient } from '@prisma/client';
 import { Assets, Blockfrost, C, Lucid, Network, Tx, TxComplete, Unit, UTxO, utxoToCore } from 'lucid-cardano';
 import dotenv from 'dotenv';
 import sample from 'lodash.sample'
-import stakingpools from '../resources/stakingPools.js'
+import stakingPools from '../resources/constants/stakingPools.js'
 import { addAssets, subAssetsFromUtxos, divideAssetsBy2 } from '../util/sc.js'
 import { dbFromPool } from '../util/snapshot.js'
 dotenv.config();
@@ -15,30 +15,38 @@ if (!BLOCKFROST_URL || !BLOCKFROST_KEY || !NETWORK) {
   throw 'Environment variables not set'
 }
 
-type HarvestReqBody = {
+type HarvestReqBody = [{
   poolIndex: number,
   address: string
-}
+}]
 
-const harvest = async (prisma: PrismaClient, body: string) => {
+const harvestCtrl = async (prisma: PrismaClient, body: string) => {
 
   const parsedBody: HarvestReqBody = JSON.parse(body)
-  let poolIndex = parsedBody.poolIndex
-  let address = parsedBody.address
-  console.log(`Body: ${body}`)
+  console.log(parsedBody)
+  const harvestTxRes = await Promise.all(parsedBody.map(async (harvestReq) => {
+    return await harvestTX(prisma, harvestReq);
+  }));
+  console.log(harvestTxRes)
+
+}
+
+const harvestTX = async (prisma: PrismaClient, harvestReq: any) => {
+
+  let poolIndex = harvestReq.poolIndex
+  let address = harvestReq.address
   console.log(poolIndex)
   console.log(address)
-  console.log(Object.keys(JSON.parse(body)))
-  console.log(Object.values(JSON.parse(body)))
+
 
   const poolI = Number(poolIndex) //: -1
   if (poolI == -1) return { error: "Failed, pool doesn't exist in db." }
 
-  const poolargs = stakingpools[poolI]
+  const poolargs = stakingPools[poolI]
 
   const lucid = await Lucid.new(
-    new Blockfrost(BLOCKFROST_URL, BLOCKFROST_KEY),
-    NETWORK as Network
+      new Blockfrost(BLOCKFROST_URL, BLOCKFROST_KEY),
+      NETWORK as Network
   )
   let pool;
   console.log(`PoolI: ${poolI}`)
@@ -177,14 +185,14 @@ const harvest = async (prisma: PrismaClient, body: string) => {
   distPayback = addAssets(distPayback, { 'lovelace': 10000n })
 
   let tx: any = lucid.newTx()
-    .collectFrom([userUtxo, beUtxo])
-  
+      .collectFrom([userUtxo, beUtxo])
+
   if (beLength < 10) { // Note: if statement was commented out when testing successfully with ADAO (only else statement) got triggered
     let splitAssets = divideAssetsBy2(distPayback)
     tx = tx.payToAddress(poolargs.poolInfo.distAddress, splitAssets[0])
     tx = tx.payToAddress(poolargs.poolInfo.distAddress, splitAssets[1])
   } else {
-  tx = tx.payToAddress(poolargs.poolInfo.distAddress, distPayback)
+    tx = tx.payToAddress(poolargs.poolInfo.distAddress, distPayback)
   }
   let now = new Date().valueOf()
   let slot = lucid.utils.unixTimeToSlot(now + 180000)
@@ -208,4 +216,4 @@ const harvest = async (prisma: PrismaClient, body: string) => {
   return { txHex: sTx.toString('hex') }
 }
 
-export { harvest, HarvestReqBody }
+export { harvestCtrl, HarvestReqBody }
