@@ -3,8 +3,10 @@ import fastify from 'fastify'
 import Bottleneck from 'bottleneck'
 import { submitJob } from './cardano-utils.js'
 import { harvestTx } from './harvestTx.js'
-import {harvestCtrl} from '../components/harvestTx'
 import { pendingRewards } from './pendingRewards.js'
+import {harvestCtrl} from '../components/harvestTx'
+import {submitJobCtrl} from '../components/cardano-utils'
+import { pendingRewardsCtrl } from '../components/pendingRewards'
 import dotenv from 'dotenv'
 dotenv.config()
 
@@ -83,4 +85,16 @@ server.post('/v2/harvestTx', async (request, reply) => {
     const resp = await limiter.schedule(() => harvestCtrl(prisma, body))
     console.log(resp)
     return resp
+})
+
+server.post('/v2/submit', async (request, reply) => {
+    console.log(`Entered /v2/submit`)
+    const body: any = request.body
+    return await limiter.schedule(() => submitJobCtrl(prisma, body))
+})
+
+server.post('/v2/pendingRewards', async (request, reply) => {
+    const body: any = request.body
+    console.log(`Entered /v2/pendingRewards`)
+    return await limiter.schedule(() => pendingRewardsCtrl(prisma, body))
 })
