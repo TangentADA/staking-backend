@@ -40,14 +40,7 @@ server.register(import('@fastify/cors'),
         }
 )
 
-server.listen(PORT, (err, address) => {
-    if (err) {
-        console.log("error")
-        console.error(err)
-        process.exit(1)
-    }
-    console.log(`Server listening at ${address}`)
-})
+server.listen(PORT, '0.0.0.0')
 
 server.get('/bing', async (request, reply) => {
     console.log('poo poo')
