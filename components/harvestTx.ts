@@ -15,26 +15,26 @@ if (!BLOCKFROST_URL || !BLOCKFROST_KEY || !NETWORK) {
   throw 'Environment variables not set'
 }
 
-type HarvestReqBody = [{
+type HarvestReqBody = {
+  quantity: number,
   poolIndex: number,
   address: string
-}]
+}
 
 const harvestCtrl = async (prisma: PrismaClient, body: string) => {
 
   const parsedBody: HarvestReqBody = JSON.parse(body)
   console.log(parsedBody)
-  const harvestTxRes = await Promise.all(parsedBody.map(async (harvestReq) => {
-    return await harvestTX(prisma, harvestReq);
-  }));
+  const harvestTxRes = await harvestTX(prisma, parsedBody);
   console.log(harvestTxRes)
-
+  return harvestTxRes;
 }
 
 const harvestTX = async (prisma: PrismaClient, harvestReq: any) => {
 
   let poolIndex = harvestReq.poolIndex
   let address = harvestReq.address
+  let quantity = harvestReq.quantity ? harvestReq.quantity : 1
   console.log(poolIndex)
   console.log(address)
 
@@ -81,7 +81,7 @@ const harvestTX = async (prisma: PrismaClient, harvestReq: any) => {
     })
 
     let epochRatio = delta / 432000000
-    let updatePay = Math.floor(epochRatio * (poolargs.poolInfo.rewardPerEpochQt))
+    let updatePay = Math.floor(epochRatio * (quantity * (poolargs.poolInfo.rewardPerEpochQt)))
     let valueAdded: Assets = {}
     valueAdded[poolargs.poolInfo.harvestUnit] = BigInt(updatePay)
 

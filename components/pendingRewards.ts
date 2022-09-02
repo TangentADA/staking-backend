@@ -16,14 +16,23 @@ if (!BLOCKFROST_URL || !BLOCKFROST_KEY || !NETWORK) {
 }
 
 type RewardReqBody = {
-  poolIndex: number,
-  address: string
+    quantity: number,
+    poolIndex: number,
+    address: string
 }
 
 const pendingRewardsCtrl = async (prisma: PrismaClient, body: string) => {
     const parsedBody: RewardReqBody = JSON.parse(body)
-    let poolI = parsedBody.poolIndex
-    let address = parsedBody.address
+    const rewardsRes = await pendingRewards(prisma, parsedBody);
+    console.log(rewardsRes)
+    return rewardsRes;
+}
+
+
+const pendingRewards = async (prisma: PrismaClient, rewardsReq: any) => {
+    let poolI = rewardsReq.poolIndex
+    let quantity = rewardsReq.quantity ? rewardsReq.quantity : 1;
+    let address = rewardsReq.address
     const poolargs = stakingpools[poolI]
 
     let pool = await prisma.pool.findFirst({
@@ -53,7 +62,7 @@ const pendingRewardsCtrl = async (prisma: PrismaClient, body: string) => {
         })
 
         let epochRatio = delta/432000000
-        let updatePay = Math.floor(epochRatio*(poolargs.poolInfo.rewardPerEpochQt))
+        let updatePay = Math.floor(epochRatio * ( quantity * (poolargs.poolInfo.rewardPerEpochQt)))
         let valueAdded: Assets = {}
         valueAdded[poolargs.poolInfo.harvestUnit] = BigInt(updatePay)
 
