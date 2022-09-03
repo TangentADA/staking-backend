@@ -21,6 +21,16 @@ type HarvestReqBody = {
   address: string
 }
 
+/**
+ * Represents a hash to be signed by user.
+ *
+ * @async
+ * @function harvestCtrl
+ * @param {string} body - The String of request body.
+ * @param {object} prisma - The prisma client Object.
+ * @return {Promise<object>} The data of hash to be signed by user.
+ */
+
 const harvestCtrl = async (prisma: PrismaClient, body: string) => {
 
   const parsedBody: HarvestReqBody = JSON.parse(body)
@@ -29,6 +39,19 @@ const harvestCtrl = async (prisma: PrismaClient, body: string) => {
   console.log(harvestTxRes)
   return harvestTxRes;
 }
+
+/**
+ * Represents a calculations and making the request result.
+ *
+ * @async
+ * @function harvestTX
+ * @param {number} quantity - The number for quantity of rewards from body object.
+ * @param {number} poolIndex - The poolIndex of reward from body object.
+ * @param {string} address - The address for user wallet from body object.
+ * @param {object} prisma - The prisma client Object.
+ * @return {Promise<object>} The txHex of hash to be signed by user.
+ * 
+ */
 
 const harvestTX = async (prisma: PrismaClient, harvestReq: any) => {
 
