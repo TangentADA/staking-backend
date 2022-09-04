@@ -9,6 +9,16 @@ type SubmitReqBody = {
 }
 
 
+/**
+ * Represents Initialing Lucid.
+ *
+ * @async
+ * @function initLucid
+ * @param {string} BLOCKFROST_URL - The String of BLOCKFROST_URL from env variables.
+ * @param {string} BLOCKFROST_API_KEY - The String of BLOCKFROST_API_KEY from env variables.
+ * @param {string} BLOCKFROST_NETWORK - The String of BLOCKFROST_NETWORK from env variables.
+ * @return {Promise<object>} The Lucid new instance object.
+ */
 const initLucid = async () => {
     if (!process.env.BLOCKFROST_URL || !process.env.BLOCKFROST_API_KEY || !process.env.BLOCKFROST_NETWORK)
         throw 'BLOCKFROST_URL and/or BLOCKFROST_API_KEY environment variables not set'
@@ -19,6 +29,15 @@ const initLucid = async () => {
     )
 }
 
+/**
+ * Represents submit sign and complete the rewards progress for a user.
+ *
+ * @async
+ * @function submitJobCtrl
+ * @param {string} body - The String of request body.
+ * @param {object} prisma - The prisma client Object.
+ * @return {Promise<object>} The response from submit job of transaction.
+ */
 const submitJobCtrl = async (prisma: PrismaClient, submitReqBody: string) => {
     if (!process.env.SERVER_PRIVKEY) throw "SERVER_PRIVKEY env variable not set"
     //Validate and parse request body
@@ -69,6 +88,16 @@ const submitJobCtrl = async (prisma: PrismaClient, submitReqBody: string) => {
     throw 'Failed to submit'
 }
 
+/**
+ * Represents flow for removing assets a user.
+ *
+ * @async
+ * @function removeUsersAssetsFromDB
+ * @param {string} address - The String of address.
+ * @param {number} poolI - The number of poolId.
+ * @param {object} prisma - The prisma client Object.
+ * @return {Promise<object>} The data of removed assets.
+ */
 const removeUsersAssetsFromDB = async (prisma: PrismaClient, address: string, poolI: number) => {
     let addr = address.toString()
     const pkh = C.Address.from_bech32(addr).as_base()?.payment_cred().to_keyhash()?.to_hex();
@@ -105,6 +134,13 @@ const removeUsersAssetsFromDB = async (prisma: PrismaClient, address: string, po
     }
 }
 
+/**
+ * Represents parsed body of submitJob request body.
+ *
+ * @function pendingRewardsCtrl
+ * @param {string} body - The String of request body.
+ * @return {Promise<object>} The data of parsed request body.
+ */
 function parseSubmitBody(submitReqBody: string) {
     const parsedBody: SubmitReqBody = JSON.parse(submitReqBody)
     let transaction

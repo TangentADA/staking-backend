@@ -21,6 +21,16 @@ type RewardReqBody = {
     address: string
 }
 
+
+/**
+ * Represents pendingRewards for a user.
+ *
+ * @async
+ * @function pendingRewardsCtrl
+ * @param {string} body - The String of request body.
+ * @param {object} prisma - The prisma client Object.
+ * @return {Promise<object>} The data of user rewards.
+ */
 const pendingRewardsCtrl = async (prisma: PrismaClient, body: string) => {
     const parsedBody: RewardReqBody = JSON.parse(body)
     const rewardsRes = await pendingRewards(prisma, parsedBody);
@@ -29,6 +39,18 @@ const pendingRewardsCtrl = async (prisma: PrismaClient, body: string) => {
 }
 
 
+/**
+ * Represents a calculations of pendingRewards for user.
+ *
+ * @async
+ * @function pendingRewards
+ * @param {number} quantity - The number for quantity of rewards from body object.
+ * @param {number} poolIndex - The poolIndex of reward from body object.
+ * @param {string} address - The address for user wallet from body object.
+ * @param {object} prisma - The prisma client Object.
+ * @return {Promise<object>} The pendingReward of user.
+ *
+ */
 const pendingRewards = async (prisma: PrismaClient, rewardsReq: any) => {
     let poolI = rewardsReq.poolIndex
     let quantity = rewardsReq.quantity ? rewardsReq.quantity : 1;
