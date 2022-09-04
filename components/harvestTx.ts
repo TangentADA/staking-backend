@@ -2,7 +2,7 @@ import { PrismaClient } from '@prisma/client';
 import { Assets, Blockfrost, C, Lucid, Network, Tx, TxComplete, Unit, UTxO, utxoToCore } from 'lucid-cardano';
 import dotenv from 'dotenv';
 import sample from 'lodash.sample'
-import stakingpools from '../resources/stakingPools.js'
+import stakingPools from '../resources/constants/stakingPools.js'
 import { addAssets, subAssetsFromUtxos, divideAssetsBy2 } from '../util/sc.js'
 import { dbFromPool } from '../util/snapshot.js'
 dotenv.config();
@@ -16,29 +16,60 @@ if (!BLOCKFROST_URL || !BLOCKFROST_KEY || !NETWORK) {
 }
 
 type HarvestReqBody = {
+  quantity: number,
   poolIndex: number,
   address: string
 }
 
-const harvest = async (prisma: PrismaClient, body: string) => {
+/**
+ * Represents a hash to be signed by user.
+ *
+ * @async
+ * @function harvestCtrl
+ * @param {string} body - The String of request body.
+ * @param {object} prisma - The prisma client Object.
+ * @return {Promise<object>} The data of hash to be signed by user.
+ */
+
+const harvestCtrl = async (prisma: PrismaClient, body: string) => {
 
   const parsedBody: HarvestReqBody = JSON.parse(body)
-  let poolIndex = parsedBody.poolIndex
-  let address = parsedBody.address
-  console.log(`Body: ${body}`)
+  console.log(parsedBody)
+  const harvestTxRes = await harvestTX(prisma, parsedBody);
+  console.log(harvestTxRes)
+  return harvestTxRes;
+}
+
+/**
+ * Represents a calculations and making the request result.
+ *
+ * @async
+ * @function harvestTX
+ * @param {number} quantity - The number for quantity of rewards from body object.
+ * @param {number} poolIndex - The poolIndex of reward from body object.
+ * @param {string} address - The address for user wallet from body object.
+ * @param {object} prisma - The prisma client Object.
+ * @return {Promise<object>} The txHex of hash to be signed by user.
+ * 
+ */
+
+const harvestTX = async (prisma: PrismaClient, harvestReq: any) => {
+
+  let poolIndex = harvestReq.poolIndex
+  let address = harvestReq.address
+  let quantity = harvestReq.quantity ? harvestReq.quantity : 1
   console.log(poolIndex)
   console.log(address)
-  console.log(Object.keys(JSON.parse(body)))
-  console.log(Object.values(JSON.parse(body)))
+
 
   const poolI = Number(poolIndex) //: -1
   if (poolI == -1) return { error: "Failed, pool doesn't exist in db." }
 
-  const poolargs = stakingpools[poolI]
+  const poolargs = stakingPools[poolI]
 
   const lucid = await Lucid.new(
-    new Blockfrost(BLOCKFROST_URL, BLOCKFROST_KEY),
-    NETWORK as Network
+      new Blockfrost(BLOCKFROST_URL, BLOCKFROST_KEY),
+      NETWORK as Network
   )
   let pool;
   console.log(`PoolI: ${poolI}`)
@@ -73,7 +104,7 @@ const harvest = async (prisma: PrismaClient, body: string) => {
     })
 
     let epochRatio = delta / 432000000
-    let updatePay = Math.floor(epochRatio * (poolargs.poolInfo.rewardPerEpochQt))
+    let updatePay = Math.floor(epochRatio * (quantity * (poolargs.poolInfo.rewardPerEpochQt)))
     let valueAdded: Assets = {}
     valueAdded[poolargs.poolInfo.harvestUnit] = BigInt(updatePay)
 
@@ -177,14 +208,14 @@ const harvest = async (prisma: PrismaClient, body: string) => {
   distPayback = addAssets(distPayback, { 'lovelace': 10000n })
 
   let tx: any = lucid.newTx()
-    .collectFrom([userUtxo, beUtxo])
-  
+      .collectFrom([userUtxo, beUtxo])
+
   if (beLength < 10) { // Note: if statement was commented out when testing successfully with ADAO (only else statement) got triggered
     let splitAssets = divideAssetsBy2(distPayback)
     tx = tx.payToAddress(poolargs.poolInfo.distAddress, splitAssets[0])
     tx = tx.payToAddress(poolargs.poolInfo.distAddress, splitAssets[1])
   } else {
-  tx = tx.payToAddress(poolargs.poolInfo.distAddress, distPayback)
+    tx = tx.payToAddress(poolargs.poolInfo.distAddress, distPayback)
   }
   let now = new Date().valueOf()
   let slot = lucid.utils.unixTimeToSlot(now + 180000)
@@ -208,4 +239,4 @@ const harvest = async (prisma: PrismaClient, body: string) => {
   return { txHex: sTx.toString('hex') }
 }
 
-export { harvest, HarvestReqBody }
+export { harvestCtrl, HarvestReqBody }

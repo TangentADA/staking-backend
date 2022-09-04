@@ -1,9 +1,9 @@
 import * as scripts from './plutus.js'
 
 
-const pools = {
-    "0": {
-        name: "poloPool",
+const pools = [
+     {
+        id: "poloPool",
         userInfo: {
             rewardType: '$zPOLO',
         },
@@ -26,12 +26,12 @@ const pools = {
             openFrom: new Date()
         },
     },
-    "1": {
-        name: "adao2PoolInfo",
-            userInfo: {
-                rewardType: '$OAether',
-            },
-            poolInfo: {
+     {
+        id: "adao2PoolInfo",
+        userInfo: {
+            rewardType: '$OAether',
+        },
+        poolInfo: {
                 name: "ADAO for Origin Aether",
                 poolIndex: 1,
                 //Policy Id of ADAO: 5b01968867e13432afaa2f814e1d15e332d6cd0aa77e350972b0967d
@@ -57,8 +57,8 @@ const pools = {
                 closesAt: new Date(new Date().getDay() + 365),
                 openFrom: new Date()
             }
-        }
-}
+    }
+]
 
 const stakingPools = pools;
 
